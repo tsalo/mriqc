@@ -19,7 +19,7 @@ DOCKER_RUN="docker run -i -v $HOME/data:/data:ro \
                        ${DOCKER_IMAGE}:${DOCKER_TAG} \
                        /data/${TEST_DATA_NAME} out/ participant \
                        --testing --verbose-reports --profile \
-                       --n_procs 2 --ants-nthreads 1 --ica"
+                       --n_procs 2 --ants-nthreads 2 --ica"
 
 case $CIRCLE_NODE_INDEX in
 	0)
