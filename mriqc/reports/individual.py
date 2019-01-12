@@ -13,7 +13,7 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 
 def individual_html(in_iqms, in_plots=None, api_id=None):
-    from os import path as op
+    from pathlib import Path
     import datetime
     from json import load
     from mriqc import logging, __version__ as ver
@@ -65,12 +65,12 @@ first {} volumes</span>. They were excluded before generating any QC measures an
 
         return in_prov, wf_details, sett_dict
 
-    with open(in_iqms) as jsonfile:
+    in_iqms = Path(in_iqms)
+    with in_iqms.open() as jsonfile:
         iqms_dict = load(jsonfile)
 
     # Now, the in_iqms file should be correctly named
-    fname = op.splitext(op.basename(in_iqms))[0]
-    out_file = op.abspath(fname + '.html')
+    out_file = str(Path(in_iqms.with_suffix(".html").name).resolve())
 
     # Extract and prune metadata
     metadata = iqms_dict.pop('bids_meta', None)
@@ -85,15 +85,18 @@ first {} volumes</span>. They were excluded before generating any QC measures an
         in_plots = []
     else:
         if any(('melodic_reportlet' in k for k in in_plots)):
-            REPORT_TITLES['bold'].insert(3, 'ICA components')
+            REPORT_TITLES['bold'].insert(3, ('ICA components', 'ica-comps'))
+        if any(('plot_spikes' in k for k in in_plots)):
+            REPORT_TITLES['bold'].insert(3, ('Spikes', 'spikes'))
 
-        in_plots = [(REPORT_TITLES[mod][i], read_report_snippet(v))
+        in_plots = [(REPORT_TITLES[mod][i] + (read_report_snippet(v), ))
                     for i, v in enumerate(in_plots)]
 
     pred_qa = None  # metadata.pop('mriqc_pred', None)
     config = {
         'modality': mod,
-        'sub_id': '_'.join(file_id),
+        'dataset': metadata.pop('dataset', None),
+        'bids_name': in_iqms.with_suffix("").name,
         'timestamp': datetime.datetime.now().strftime("%Y-%m-%d, %H:%M"),
         'version': ver,
         'imparams': iqms2html(iqms_dict, 'iqms-table'),

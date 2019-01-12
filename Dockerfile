@@ -98,7 +98,7 @@ RUN conda install -c conda-forge -y openblas=0.2.19; \
                      cython \
                      scipy=0.19.0 \
                      matplotlib=2.2.0 \
-                     pandas=0.19.2 \
+                     pandas=0.23.2 \
                      libxml2=2.9.4 \
                      libxslt=1.1.29 \
                      sympy=1.0 \
@@ -135,6 +135,7 @@ COPY . /usr/local/src/mriqc
 ARG VERSION
 RUN echo "${VERSION}" > mriqc/VERSION && \
     pip install .[all] && \
+    find /usr/local/miniconda/lib/python*/site-packages/mriqc -type f -exec chmod a+r {} + && \
     rm -rf ~/.cache/pip
 
 # Run mriqc by default

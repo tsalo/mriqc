@@ -94,8 +94,8 @@ jobs:
           no_output_timeout: 40m
           command: |
             mkdir -p /tmp/cache
-            docker save python:3.4-onbuild swaggerapi/swagger-ui:v3.0.12 nginx:latest mongo:latest \
-              | pigz -2 -p 3 > /tmp/cache/webapi.tar.gz
+            WEBAPI_IMAGES=$(docker images | grep -E 'python|swaggerapi/swagger-ui|nginx|mongo' | awk '{ printf "%s:%s ", $1, $2}')
+            docker save ${WEBAPI_IMAGES} | pigz -2 -p 3 > /tmp/cache/webapi.tar.gz
       - persist_to_workspace:
           root: /tmp
           paths:
@@ -275,7 +275,7 @@ jobs:
                        -v $PWD:/scratch -w /scratch \
                        poldracklab/mriqc:latest \
                        /data derivatives/ participant \
-                       -vv --verbose-reports --profile -m T1w \
+                       -vv --verbose-reports --profile -m T1w --dsname circletests \
                        --n_procs 2 --ants-nthreads 1 --ants-float \
                        --webapi-url http://$( hostname -I | awk '{print $1}' )/api/v1 --upload-strict
       - run:
@@ -312,8 +312,8 @@ jobs:
           command: |
             docker run --rm=false -ti -v $PWD:/scratch -w /scratch \
               --entrypoint="dfcheck" poldracklab/mriqc:latest \
-              -i /scratch/derivatives/T1w.csv \
-              -r /usr/local/src/mriqc/mriqc/data/testdata/T1w.csv
+              -i /scratch/derivatives/group_T1w.tsv \
+              -r /usr/local/src/mriqc/mriqc/data/testdata/group_T1w.tsv
 
       - run:
           name: WebAPI - Check records
@@ -333,7 +333,7 @@ jobs:
             # Run the classifier on the test data
             docker run --rm=false -ti -v $PWD:/scratch -w /scratch \
                        --entrypoint=mriqc_clf poldracklab/mriqc:latest \
-                       --load-classifier $( basename `ls mclf_run-*_class-2_cv-loso_data-all_estimator.pklz` ) -X /scratch/derivatives/T1w.csv -v
+                       --load-classifier $( basename `ls mclf_run-*_class-2_cv-loso_data-all_estimator.pklz` ) -X /scratch/derivatives/group_T1w.tsv -v
       - store_artifacts:
           path: /tmp/t1w/derivatives
 
@@ -385,7 +385,7 @@ jobs:
                        -v $PWD:/scratch -w /scratch \
                        poldracklab/mriqc:latest \
                        /data derivatives/ participant \
-                       -vv --verbose-reports --profile -m bold \
+                       -vv --verbose-reports --profile -m bold --dsname circletests \
                        --n_procs 2 --ants-nthreads 1 --ants-float \
                        --testing --ica \
                        --webapi-url http://$( hostname -I | awk '{print $1}' )/api/v1 --upload-strict
@@ -424,8 +424,8 @@ jobs:
           command: |
             docker run --rm=false -ti -v $PWD:/scratch -w /scratch \
               --entrypoint="dfcheck" poldracklab/mriqc:latest \
-              -i /scratch/derivatives/bold.csv \
-              -r /usr/local/src/mriqc/mriqc/data/testdata/bold.csv
+              -i /scratch/derivatives/group_bold.tsv \
+              -r /usr/local/src/mriqc/mriqc/data/testdata/group_bold.tsv
 
       - run:
           name: WebAPI - Check records
